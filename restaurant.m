@@ -39,7 +39,7 @@ classdef restaurant < handle
             obj.nVotes = obj.nVotes + nVotesAdd;
         end
 
-        function obj.removeVote(obj,nVotesRemove)
+        function removeVote(obj,nVotesRemove)
             arguments
                 obj (1,1) restaurant
                 nVotesRemove (1,1) double {mustBeInteger,mustBePositive} = 1
