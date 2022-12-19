@@ -1,12 +1,23 @@
 classdef restaurant < handle
+    %% Properties -- general
+    properties (SetObservable = true)
+        UserData
+    end
+    
     %% Properties -- info
     properties (SetAccess = immutable)
         name (1,1) string
+
+        logoImageFilename (1,1) string
     end
 
     %% Proeprties -- voting
     properties (SetObservable = true, SetAccess = private)
         nVotes (1,1) double = 0
+    end
+
+    properties (SetObservable = true)
+        nVotesTemp (1,1) double {mustBeInteger} = 0
     end
 
     %% Methods -- constructor/destructor
@@ -46,6 +57,24 @@ classdef restaurant < handle
             end
 
             obj.nVotes = obj.nVotes - nVotesRemove;
+        end
+
+        function countTempVotes(obj)
+            obj.nVotes = obj.nVotes + obj.nVotesTemp;
+            obj.nVotesTemp = 0;
+        end
+
+        function resetVotes(obj,opts)
+            arguments
+                obj
+                opts.tempVotesOnly (1,1) logical = false
+            end
+
+            if ~opts.tempVotesOnly
+                obj.nVotes = 0;
+            end
+
+            obj.nVotesTemp = 0;
         end
     end
 end

@@ -7,11 +7,19 @@ classdef spinnerWheel < handle
     properties (Transient, Access = private)
         wheelAngle (1,1) double = 0;
         startAngles (1,:) double
+        endAngles (1,:) double
         names (1,:) string
+        pointerAngle (1,1) double = 180
+
+        PointerPS polyshape = polyshape.empty;
+        PointerPatch = gobjects(1);
+        WedgePatch = gobjects(1);
+        WedgeText = gobjects(1);
+        NoVotesText
     end
 
     properties (SetObservable = true)
-        nPtsCirc (1,1) double {mustBeInteger,mustBeGreaterThanOrEqual(nPtsCirc,10)} = 180
+        nPtsCirc (1,1) double {mustBeInteger,mustBeGreaterThanOrEqual(nPtsCirc,10)} = 100
     end
 
     %% Methods -- contructor/destructor
@@ -24,30 +32,41 @@ classdef spinnerWheel < handle
             obj.figAxes = figAxes;
 
             obj.setupAxes;
+
+            rng shuffle;
         end
     end
 
 
     %% Methods -- graphics
     methods
-        function draw(obj,wedgeSizes,wedgeNames,pointerAngle,opts)
+        function draw(obj,wedgeSizes,wedgeNames,pointerAngleDeg)
             arguments
                 obj (1,1) spinnerWheel
                 wedgeSizes (1,:) double {mustBeNonempty,mustBeReal,mustBeNonnegative}
                 wedgeNames (1,:) string {mustBeNonempty}
-                pointerAngle (1,1) double {mustBeReal,mustBeFinite} = 0;
-                opts.onlyUpdatePointer (1,1) logical = false
+                pointerAngleDeg (1,1) double {mustBeReal,mustBeFinite} = 180;
             end
 
-            cla(obj.figAxes);
+            obj.pointerAngle = deg2rad(pointerAngleDeg);
 
+            delete(obj.WedgePatch)
+            delete(obj.WedgeText)
+            obj.WedgePatch = gobjects(1);
+            obj.WedgeText = gobjects(1);
+
+            if isgraphics(obj.PointerPatch)
+                obj.PointerPatch.Visible = sum(wedgeSizes) > 0;
+            end
+            
             if sum(wedgeSizes) == 0
+                obj.NoVotesText.Visible = true;
                 return
+            else
+                obj.NoVotesText.Visible = false;
             end
 
-            if opts.onlyUpdatePointer
-                return
-            end
+            obj.wheelAngle = 0;
 
             deleteInds = wedgeSizes == 0;
             wedgeSizes(deleteInds) = [];
@@ -62,13 +81,17 @@ classdef spinnerWheel < handle
 
             fracStarts = [0,cumsum(fracSpans(1:end-1))];
 
-            obj.startAngles = fracStarts*2*pi;
+            obj.endAngles = 2*pi-fracStarts*2*pi+pi/2;
+            obj.startAngles = obj.endAngles-fracSpans*2*pi;
 
-            [R,G,B] = obj.makeRGBColors(nWedges);
+            RGB = obj.makeRGBColors(nWedges);
 
             fracCenters = fracStarts + fracSpans/2;
 
             centerAngsDeg = -fracCenters*360+90;
+
+            obj.WedgePatch = gobjects(1,nWedges);
+            obj.WedgeText = gobjects(1,nWedges);
 
             for ii = 1:nWedges
 
@@ -77,44 +100,52 @@ classdef spinnerWheel < handle
                 end
 
                 [x,y] = obj.calculateWedge(fracStarts(ii),fracSpans(ii));
-                patch(obj.figAxes,x,y,[R(ii),G(ii),B(ii)],DisplayName=wedgeNames(ii));
+                obj.WedgePatch(ii) = patch(obj.figAxes,x,y,RGB(ii,:),DisplayName=wedgeNames(ii));
                 textXY = 0.9*[cosd(centerAngsDeg(ii)),sind(centerAngsDeg(ii))];
-                text(obj.figAxes,textXY(1),textXY(2),wedgeNames(ii),FontUnits='normalized',Rotation=centerAngsDeg(ii)+180,FontSize=0.05);
+
+                % https://stackoverflow.com/questions/946544/good-text-foreground-color-for-a-given-background-color/946734#946734
+                textColor = double(~round(rgb2gray(RGB(ii,:))));
+
+                obj.WedgeText(ii) = text(obj.figAxes,textXY(1),textXY(2),wedgeNames(ii),Color=textColor,FontUnits='normalized',Rotation=centerAngsDeg(ii)+180,FontSize=0.04);
             end
 
 
 
-            xyArrow = [-1,0;
+            
+            delete(obj.PointerPatch)
+            obj.drawPointer;
+
+
+        end
+
+        function drawPointer(obj,angleDeg)
+            arguments
+                obj (1,1) spinnerWheel
+                angleDeg = rad2deg(obj.pointerAngle)
+            end
+
+            obj.pointerAngle = deg2rad(angleDeg);
+
+            if ~isgraphics(obj.PointerPatch) || isempty(obj.PointerPS)
+                xyArrow = [-1,0;
                         1,0;
                         1,3;
                         0,5;
                         -1,3;
                         -1,0];
 
-            xyArrow = 0.075*xyArrow;
+                xyArrow = 0.075*xyArrow;
+                obj.PointerPS = polyshape(xyArrow(:,1),xyArrow(:,2)).rotate(-90).translate([-1.3,0]);
+                obj.PointerPatch = patch(obj.figAxes,NaN,NaN,'r',FaceAlpha=1,EdgeColor='k',LineWidth=3);
+            end
 
-            A = polyshape(xyArrow(:,1),xyArrow(:,2));
-            A = A.rotate(-90).translate([-1.3,0]).rotate(pointerAngle-180);
+            xy = obj.PointerPS.rotate(rad2deg(obj.pointerAngle)+180).Vertices;
 
-            hold(obj.figAxes,'on');
-            plot(obj.figAxes,A,FaceColor='r',FaceAlpha=1,EdgeColor='k',LineWidth=3);
-            
-
-
-
-            axis(obj.figAxes,'equal');
-
-            xlim(obj.figAxes,[-1.35,1.35]);
+            obj.PointerPatch.XData = xy(:,1);
+            obj.PointerPatch.YData = xy(:,2);
         end
 
         function winner = spin(obj)
-            C = obj.figAxes.Children;
-
-            textInds = arrayfun(@(x)isa(x,'matlab.graphics.primitive.Text'),C);
-
-            TextObjs = C(textInds);
-
-
             om_limL = 30;
             om_limH = 45;
             damp_limL = 0.98;
@@ -150,28 +181,27 @@ classdef spinnerWheel < handle
                 om_old = om_new;
             end
 
-            stopAng = wrapTo2Pi(obj.wheelAngle);
 
-            dists = stopAng-obj.startAngles;
+            TF = isInAngRange(obj.wheelAngle+[obj.startAngles;obj.endAngles].',obj.pointerAngle);
 
-            dists(dists<0) = NaN;
-
-            [~,winInd] = min(dists);
-
-            winner = obj.names(winInd);
+            if sum(TF) == 1
+                winner = obj.names(TF);
+            else
+                winner = NaN;
+            end
             
 
             function rotateStep(thStep)
                 thStep = rad2deg(thStep);
-                rotate(C(~textInds),[0,0,1],thStep,[0,0,0]);
+                rotate(obj.WedgePatch,[0,0,1],thStep,[0,0,0]);
 
-                for jj = 1:numel(TextObjs)
-                    thNew = TextObjs(jj).Rotation + thStep;
+                for WT = obj.WedgeText
+                    thNew = WT.Rotation + thStep;
                     thNewTextXY = thNew-180;
                     textXYnew = 0.9*[cosd(thNewTextXY),sind(thNewTextXY)];
 
-                    TextObjs(jj).Rotation = thNew;
-                    TextObjs(jj).Position(1:2) = textXYnew;
+                    WT.Rotation = thNew;
+                    WT.Position(1:2) = textXYnew;
                 end
                 drawnow
             end
@@ -185,6 +215,10 @@ classdef spinnerWheel < handle
             obj.figAxes.Visible = false;
             disableDefaultInteractivity(obj.figAxes);
             obj.figAxes.Toolbar.Visible = false;
+            hold(obj.figAxes,'on');
+            axis(obj.figAxes,'square');
+            axis(obj.figAxes,1.35*[-1,1,-1,1]);
+            obj.NoVotesText = text(obj.figAxes,0,0,'No Votes Cast Yet',Color='r',FontUnits='normalized',FontSize=0.1,HorizontalAlignment='center');
         end
 
         function [x,y] = calculateWedge(obj,fracStart,fracSwept)
@@ -207,7 +241,7 @@ classdef spinnerWheel < handle
 
     %% Methods -- utilities
     methods (Static, Access = private)
-        function [R,G,B] = makeRGBColors(nColors)
+        function RGB = makeRGBColors(nColors)
             R = NaN(nColors,1);
             G = NaN(nColors,1);
             B = NaN(nColors,1);
@@ -220,6 +254,8 @@ classdef spinnerWheel < handle
                 G(ii) = j(ii)*(n(ii) == 0) + 1*(n(ii) == 1 || n(ii) == 2) + (1 - j(ii))*(n(ii) == 3);
                 B(ii) = j(ii)*(n(ii) == 2) + 1*(n(ii) == 3 || n(ii) == 4) + (1 - j(ii))*(n(ii) == 5);
             end
+
+            RGB = [R,G,B];
         end
     end
 end
