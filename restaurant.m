@@ -1,22 +1,22 @@
-classdef restaurant < handle
+classdef restaurant < handle & uniqueIDobj
     %% Properties -- general
     properties (SetObservable = true)
         UserData
     end
     
     %% Properties -- info
-    properties (SetAccess = immutable)
-        name (1,1) string
+    properties (SetObservable = true)
+        name (1,1) string {mustBeNonzeroLengthText} = "New restaurant"
 
         logoImageFilename (1,1) string
     end
 
     %% Proeprties -- voting
-    properties (SetObservable = true, SetAccess = private)
+    properties (Transient, SetObservable = true, SetAccess = private)
         nVotes (1,1) double = 0
     end
 
-    properties (SetObservable = true)
+    properties (Transient, SetObservable = true)
         nVotesTemp (1,1) double {mustBeInteger} = 0
     end
 
@@ -25,10 +25,12 @@ classdef restaurant < handle
         function obj = restaurant(opts)
             arguments
                 opts.name = ""
+                opts.logoImageFilename = ""
             end
 
             % Store the user-defined properties.
             obj.name = opts.name;
+            obj.logoImageFilename = opts.logoImageFilename;
         end
     end
 

@@ -9,7 +9,8 @@ classdef spinnerWheel < handle
         startAngles (1,:) double
         endAngles (1,:) double
         names (1,:) string
-        pointerAngle (1,1) double = 180
+        data (1,:)
+        pointerAngle (1,1) double = pi
 
         PointerPS polyshape = polyshape.empty;
         PointerPatch = gobjects(1);
@@ -40,24 +41,21 @@ classdef spinnerWheel < handle
 
     %% Methods -- graphics
     methods
-        function draw(obj,wedgeSizes,wedgeNames,pointerAngleDeg)
+        function draw(obj,wedgeSizes,wedgeNames,wedgeData)
             arguments
                 obj (1,1) spinnerWheel
                 wedgeSizes (1,:) double {mustBeNonempty,mustBeReal,mustBeNonnegative}
                 wedgeNames (1,:) string {mustBeNonempty}
-                pointerAngleDeg (1,1) double {mustBeReal,mustBeFinite} = 180;
+                wedgeData (1,:)
             end
-
-            obj.pointerAngle = deg2rad(pointerAngleDeg);
 
             delete(obj.WedgePatch)
             delete(obj.WedgeText)
             obj.WedgePatch = gobjects(1);
             obj.WedgeText = gobjects(1);
 
-            if isgraphics(obj.PointerPatch)
-                obj.PointerPatch.Visible = sum(wedgeSizes) > 0;
-            end
+            delete(obj.PointerPatch)
+            obj.PointerPatch = gobjects(1);
             
             if sum(wedgeSizes) == 0
                 obj.NoVotesText.Visible = true;
@@ -71,10 +69,12 @@ classdef spinnerWheel < handle
             deleteInds = wedgeSizes == 0;
             wedgeSizes(deleteInds) = [];
             wedgeNames(deleteInds) = [];
+            wedgeData(deleteInds) = [];
 
             nWedges = numel(wedgeSizes);
             
             obj.names = wedgeNames;
+            obj.data = wedgeData;
 
 
             fracSpans = wedgeSizes/sum(wedgeSizes);
@@ -112,7 +112,7 @@ classdef spinnerWheel < handle
 
 
             
-            delete(obj.PointerPatch)
+            
             obj.drawPointer;
 
 
@@ -145,7 +145,7 @@ classdef spinnerWheel < handle
             obj.PointerPatch.YData = xy(:,2);
         end
 
-        function winner = spin(obj)
+        function [winnerName,winnerData] = spin(obj)
             om_limL = 30;
             om_limH = 45;
             damp_limL = 0.98;
@@ -185,9 +185,11 @@ classdef spinnerWheel < handle
             TF = isInAngRange(obj.wheelAngle+[obj.startAngles;obj.endAngles].',obj.pointerAngle);
 
             if sum(TF) == 1
-                winner = obj.names(TF);
+                winnerName = obj.names(TF);
+                winnerData = obj.data(TF);
             else
-                winner = NaN;
+                winnerName = NaN;
+                winnerData = [];
             end
             
 

@@ -1,0 +1,15 @@
+• Save nVotes to getenv('PROGRAMDATA')
+• Add "save" functionality to restaurant selector
+    ◘ Save to getenv('PROGRAMDATA')
+• Add "load from file" functionality to restaurant selector
+• Add instructions to main GUI
+• Add instructions to restaurant selector GUI
+• If loading for first time, save default restaurants and nVotes to getenv('PROGRAMDATA')
+• Move isInAngRange to wheel
+• Finish default restaurant list
+• Restaurant grid generation needs to be generalized. Right now the size is hard coded
+• Comment restaurant.m
+• Comment RestaurantManagementGUI.mlapp
+• Comment spinnerWheel.m
+• Comment WheelOfFortuneCookiesGUI.mlapp
+• Comment WinnerMessage.mlapp
