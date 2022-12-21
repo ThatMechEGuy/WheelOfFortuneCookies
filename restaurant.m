@@ -3,10 +3,14 @@ classdef restaurant < handle & uniqueIDobj
     properties (SetObservable = true)
         UserData
     end
+
+    properties (Access = private, Constant)
+        allowedLogoFileTypes = [".png",".bmp",".jpg",".jpeg"]
+    end
     
     %% Properties -- info
     properties (SetObservable = true)
-        name (1,1) string {mustBeNonzeroLengthText} = "New restaurant"
+        name (1,1) string
 
         logoImageFilename (1,1) string
     end
@@ -24,7 +28,7 @@ classdef restaurant < handle & uniqueIDobj
     methods
         function obj = restaurant(opts)
             arguments
-                opts.name = ""
+                opts.name = "New restaurant"
                 opts.logoImageFilename = ""
             end
 
@@ -38,6 +42,26 @@ classdef restaurant < handle & uniqueIDobj
     methods
         function set.nVotes(obj,newVal)
             obj.nVotes = max(newVal,0);
+        end
+
+        function set.logoImageFilename(obj,newVal)
+            newVal = strtrim(newVal);
+            if newVal == ""
+                return
+            end
+            [~,~,ext] = fileparts(newVal);
+
+            if ~ismember(ext,obj.allowedLogoFileTypes)
+                error("restaurant:invalidLogoImageFileType",...
+                "The logo image file extension ""%s"" is not allowed. The allowed extensions "+...
+                "are:\n%s",ext,makeBulletedList(obj.allowedLogoFileTypes))
+            end
+
+            obj.logoImageFilename = newVal;
+        end
+
+        function set.name(obj,newVal)
+            obj.name = strtrim(newVal);
         end
     end
 

@@ -12,4 +12,3 @@
 • Comment RestaurantManagementGUI.mlapp
 • Comment spinnerWheel.m
 • Comment WheelOfFortuneCookiesGUI.mlapp
-• Comment WinnerMessage.mlapp
