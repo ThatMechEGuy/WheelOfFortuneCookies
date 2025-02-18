@@ -1,15 +1,15 @@
-• Generalize the location where logos are loaded from
-• Save nVotes to getenv('PROGRAMDATA')
-• Add "save" functionality to restaurant selector
-    ◘ Save to getenv('PROGRAMDATA')
-• Add "load from file" functionality to restaurant selector
+• Make a default restaurant list for UMN
+• Make a default restaurant list for Me & Mom
+• Make sure restaurant grid generation in generalized
+• Add an option to Main GUI to load a restaurant list.
+• Show icons next to restaurant names in Main GUI.
+
+• When closing, save the number of votes per person and the path of the last-used restaurant list to getenv("PROGRAMDATA").
+• If number of votes per person is available in getenv("PROGRAMDATA") at startup, use it.
+• If last-used restaurant list is available in getenv("PROGRAMDATA"), use it. If it cannot be loaded, show an error message.
+
 • Add instructions to main GUI
 • Add instructions to restaurant selector GUI
-• If loading for first time, save default restaurants and nVotes to getenv('PROGRAMDATA')
-• Move isInAngRange to wheel
-• Finish default restaurant list
-• Restaurant grid generation needs to be generalized. Right now the size is hard coded
-• Comment restaurant.m
-• Comment RestaurantManagementGUI.mlapp
-• Comment spinnerWheel.m
-• Comment WheelOfFortuneCookiesGUI.mlapp
+• Add confirmation when loading a restaurant list if there are resaurants already in the GUI
+
+• Comment all code.

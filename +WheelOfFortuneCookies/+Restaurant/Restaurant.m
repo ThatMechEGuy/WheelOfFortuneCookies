@@ -9,10 +9,12 @@ classdef Restaurant < handle
     end
     
     %% Properties -- info
+    properties (SetAccess = private)
+        logoImage (:,:,3) uint8
+    end
+
     properties (SetObservable = true, AbortSet = true)
         name (1,1) string {mustBeNonzeroLengthText} = "New Restaurant"
-
-        logoImageFilename string {mustBeScalarOrEmpty,mustBeNonzeroLengthText} = string.empty
     end
 
     %% Proeprties -- voting
@@ -29,7 +31,8 @@ classdef Restaurant < handle
         function obj = Restaurant(options)
             arguments (Input)
                 options.name (1,1) string {mustBeNonzeroLengthText} = "New Restaurant"
-                options.logoImageFilename string {mustBeScalarOrEmpty,mustBeNonzeroLengthText} = string.empty
+                options.logoImageFilename string {mustBeScalarOrEmpty,mustBeNonzeroLengthText} = ...
+                    string.empty
             end
 
             arguments (Output)
@@ -37,7 +40,8 @@ classdef Restaurant < handle
             end
 
             obj.name = options.name;
-            obj.logoImageFilename = options.logoImageFilename;
+            
+            obj.loadLogoImage(options.logoImageFilename);
         end
     end
 
@@ -49,37 +53,27 @@ classdef Restaurant < handle
         end
         % ━━━━━━━━━━━━━━━━━━━━━━━━  nVotes  ━━━━━━━━━━━━━━━━━━━━━━━━
 
-        % ━━━━━━━━━━━━━━━━━━  logoImageFilename  ━━━━━━━━━━━━━━━━━━━
-        function set.logoImageFilename(obj,newVal)
-            if isempty(newVal)
-                obj.logoImageFilename = newVal;
-                return
-            end
-
-            newVal = strtrim(newVal);
-            if newVal == ""
-                error("WheelOfFortuneCookies:Restaurant:Restaurant:invalidLogoImageFileName",...
-                    "The logo file name must be an empty string or a non-blank string.");
-            end
-
-            [~,~,extension] = fileparts(newVal);
-
-            if ~ismember(extension,obj.ALLOWED_LOGO_FILE_TYPES)
-                allowedFileTypesBulletedList = join(" • "+obj.ALLOWED_LOGO_FILE_TYPES,newline);
-                error("WheelOfFortuneCookies:Restaurant:Restaurant:invalidLogoImageFileType",...
-                    "The logo image file extension """ + extension + """ is not allowed. " + ...
-                    "The allowed extensions are:" + newline + allowedFileTypesBulletedList);
-            end
-
-            obj.logoImageFilename = newVal;
-        end
-        % ━━━━━━━━━━━━━━━━━━  logoImageFilename  ━━━━━━━━━━━━━━━━━━━
-
         % ━━━━━━━━━━━━━━━━━━━━━━━━━  name  ━━━━━━━━━━━━━━━━━━━━━━━━━
         function set.name(obj,newVal)
             obj.name = strtrim(newVal);
         end
         % ━━━━━━━━━━━━━━━━━━━━━━━━━  name  ━━━━━━━━━━━━━━━━━━━━━━━━━
+    end
+
+    %% Methods -- logo image
+    methods
+        function loadLogoImage(obj,logoImageFileName)
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.Restaurant.Restaurant
+                logoImageFileName string {mustBeScalarOrEmpty,mustBeNonzeroLengthText}
+            end
+
+            if isempty(logoImageFileName)
+                return
+            end
+
+            obj.logoImage = imread(logoImageFileName);
+        end
     end
 
     %% Methods -- voting
