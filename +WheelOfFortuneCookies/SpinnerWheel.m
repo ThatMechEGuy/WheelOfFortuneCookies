@@ -1,39 +1,48 @@
-classdef spinnerWheel < handle
+classdef SpinnerWheel < handle
     %% Properties -- graphics
     properties (Transient, SetAccess = immutable)
-        figAxes {mustBeScalarOrEmpty,mustBeA(figAxes,{'matlab.graphics.axis.Axes','matlab.ui.control.UIAxes'})} = matlab.graphics.axis.Axes.empty
+        figureAxes {mustBeScalarOrEmpty,...
+            mustBeA(figureAxes,["matlab.graphics.axis.Axes","matlab.ui.control.UIAxes"])} = ...
+            matlab.graphics.axis.Axes.empty
     end
 
     properties (Transient, Access = private)
-        wheelAngle (1,1) double = 0;
+        wheelAngle (1,1) double = 0
         startAngles (1,:) double
         endAngles (1,:) double
         names (1,:) string
         data (1,:)
         pointerAngle (1,1) double = pi
 
-        PointerPS polyshape = polyshape.empty;
-        PointerPatch = gobjects(1);
-        WedgePatch = gobjects(1);
-        WedgeText = gobjects(1);
-        NoVotesText
+        pointerPolyshape polyshape = polyshape.empty;
+        pointerPatch = gobjects(1);
+        wedgePatch = gobjects(1);
+        wedgeText = gobjects(1);
+        noVotesText
     end
 
-    properties (SetObservable = true)
-        nPtsCirc (1,1) double {mustBeInteger,mustBeGreaterThanOrEqual(nPtsCirc,10)} = 100
+    properties (SetObservable = true, AbortSet = true)
+        nPointsForCircle (1,1) double ...
+            {mustBeInteger,mustBeGreaterThanOrEqual(nPointsForCircle,10)} = 100
     end
 
     %% Methods -- contructor/destructor
     methods
-        function obj = spinnerWheel(figAxes)
-            arguments
-                figAxes (1,1) = gca
+        function obj = SpinnerWheel(figureAxes)
+            arguments (Input)
+                figureAxes (1,1) = gca
             end
 
-            obj.figAxes = figAxes;
+            arguments (Output)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
+            end
+
+            obj.figureAxes = figureAxes;
 
             obj.setupAxes;
 
+            % Shuffling the random number generator ensures that we will get random behavior every
+            % time the wheel is run, even after restarting MATLAB.
             rng shuffle;
         end
     end
@@ -42,26 +51,26 @@ classdef spinnerWheel < handle
     %% Methods -- graphics
     methods
         function draw(obj,wedgeSizes,wedgeNames,wedgeData)
-            arguments
-                obj (1,1) spinnerWheel
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
                 wedgeSizes (1,:) double {mustBeNonempty,mustBeReal,mustBeNonnegative}
                 wedgeNames (1,:) string {mustBeNonempty}
                 wedgeData (1,:)
             end
 
-            delete(obj.WedgePatch)
-            delete(obj.WedgeText)
-            obj.WedgePatch = gobjects(1);
-            obj.WedgeText = gobjects(1);
+            delete(obj.wedgePatch)
+            delete(obj.wedgeText)
+            obj.wedgePatch = gobjects(1);
+            obj.wedgeText = gobjects(1);
 
-            delete(obj.PointerPatch)
-            obj.PointerPatch = gobjects(1);
+            delete(obj.pointerPatch)
+            obj.pointerPatch = gobjects(1);
             
             if sum(wedgeSizes) == 0
-                obj.NoVotesText.Visible = true;
+                obj.noVotesText.Visible = true;
                 return
             else
-                obj.NoVotesText.Visible = false;
+                obj.noVotesText.Visible = false;
             end
 
             obj.wheelAngle = 0;
@@ -90,23 +99,23 @@ classdef spinnerWheel < handle
 
             centerAngsDeg = -fracCenters*360+90;
 
-            obj.WedgePatch = gobjects(1,nWedges);
-            obj.WedgeText = gobjects(1,nWedges);
+            obj.wedgePatch = gobjects(1,nWedges);
+            obj.wedgeText = gobjects(1,nWedges);
 
-            for ii = 1:nWedges
+            for i = 1:nWedges
 
-                if fracSpans(ii) == 0
+                if fracSpans(i) == 0
                     continue
                 end
 
-                [x,y] = obj.calculateWedge(fracStarts(ii),fracSpans(ii));
-                obj.WedgePatch(ii) = patch(obj.figAxes,x,y,RGB(ii,:),DisplayName=wedgeNames(ii));
-                textXY = 0.9*[cosd(centerAngsDeg(ii)),sind(centerAngsDeg(ii))];
+                [x,y] = obj.calculateWedge(fracStarts(i),fracSpans(i));
+                obj.wedgePatch(i) = patch(obj.figureAxes,x,y,RGB(i,:),DisplayName=wedgeNames(i));
+                textXY = 0.9*[cosd(centerAngsDeg(i)),sind(centerAngsDeg(i))];
 
                 % https://stackoverflow.com/questions/946544/good-text-foreground-color-for-a-given-background-color/946734#946734
-                textColor = double(~round(rgb2gray(RGB(ii,:))));
+                textColor = double(~round(rgb2gray(RGB(i,:))));
 
-                obj.WedgeText(ii) = text(obj.figAxes,textXY(1),textXY(2),wedgeNames(ii),Color=textColor,FontUnits='normalized',Rotation=centerAngsDeg(ii)+180,FontSize=0.04);
+                obj.wedgeText(i) = text(obj.figureAxes,textXY(1),textXY(2),wedgeNames(i),Color=textColor,FontUnits='normalized',Rotation=centerAngsDeg(i)+180,FontSize=0.04);
             end
 
 
@@ -119,14 +128,14 @@ classdef spinnerWheel < handle
         end
 
         function drawPointer(obj,angleDeg)
-            arguments
-                obj (1,1) spinnerWheel
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
                 angleDeg = rad2deg(obj.pointerAngle)
             end
 
             obj.pointerAngle = deg2rad(angleDeg);
 
-            if ~isgraphics(obj.PointerPatch) || isempty(obj.PointerPS)
+            if ~isgraphics(obj.pointerPatch) || isempty(obj.pointerPolyshape)
                 xyArrow = [-1,0;
                         1,0;
                         1,3;
@@ -135,17 +144,21 @@ classdef spinnerWheel < handle
                         -1,0];
 
                 xyArrow = 0.075*xyArrow;
-                obj.PointerPS = polyshape(xyArrow(:,1),xyArrow(:,2)).rotate(-90).translate([-1.3,0]);
-                obj.PointerPatch = patch(obj.figAxes,NaN,NaN,'r',FaceAlpha=1,EdgeColor='k',LineWidth=3);
+                obj.pointerPolyshape = polyshape(xyArrow(:,1),xyArrow(:,2)).rotate(-90).translate([-1.3,0]);
+                obj.pointerPatch = patch(obj.figureAxes,NaN,NaN,'r',FaceAlpha=1,EdgeColor='k',LineWidth=3);
             end
 
-            xy = obj.PointerPS.rotate(rad2deg(obj.pointerAngle)+180).Vertices;
+            xy = obj.pointerPolyshape.rotate(rad2deg(obj.pointerAngle)+180).Vertices;
 
-            obj.PointerPatch.XData = xy(:,1);
-            obj.PointerPatch.YData = xy(:,2);
+            obj.pointerPatch.XData = xy(:,1);
+            obj.pointerPatch.YData = xy(:,2);
         end
 
         function [winnerName,winnerData] = spin(obj)
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
+            end
+
             om_limL = 30;
             om_limH = 45;
             damp_limL = 0.98;
@@ -182,7 +195,7 @@ classdef spinnerWheel < handle
             end
 
 
-            TF = isInAngRange(obj.wheelAngle+[obj.startAngles;obj.endAngles].',obj.pointerAngle);
+            TF = WheelOfFortuneCookies.HelperFunctions.isInAngularRange(obj.wheelAngle+[obj.startAngles;obj.endAngles].',obj.pointerAngle);
 
             if sum(TF) == 1
                 winnerName = obj.names(TF);
@@ -195,9 +208,9 @@ classdef spinnerWheel < handle
 
             function rotateStep(thStep)
                 thStep = rad2deg(thStep);
-                rotate(obj.WedgePatch,[0,0,1],thStep,[0,0,0]);
+                rotate(obj.wedgePatch,[0,0,1],thStep,[0,0,0]);
 
-                for WT = obj.WedgeText
+                for WT = obj.wedgeText
                     thNew = WT.Rotation + thStep;
                     thNewTextXY = thNew-180;
                     textXYnew = 0.9*[cosd(thNewTextXY),sind(thNewTextXY)];
@@ -212,19 +225,34 @@ classdef spinnerWheel < handle
 
     methods (Access = private)
         function setupAxes(obj)
-            cla(obj.figAxes);
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
+            end
 
-            obj.figAxes.Visible = false;
-            disableDefaultInteractivity(obj.figAxes);
-            obj.figAxes.Toolbar.Visible = false;
-            hold(obj.figAxes,'on');
-            axis(obj.figAxes,'square');
-            axis(obj.figAxes,1.35*[-1,1,-1,1]);
-            obj.NoVotesText = text(obj.figAxes,0,0,'No Votes Cast Yet',Color='r',FontUnits='normalized',FontSize=0.1,HorizontalAlignment='center');
+            cla(obj.figureAxes);
+
+            obj.figureAxes.Visible = false;
+            disableDefaultInteractivity(obj.figureAxes);
+            obj.figureAxes.Toolbar.Visible = false;
+            hold(obj.figureAxes,'on');
+            axis(obj.figureAxes,'square');
+            axis(obj.figureAxes,1.35*[-1,1,-1,1]);
+            obj.noVotesText = text(obj.figureAxes,0,0,'No Votes Cast Yet',Color='r',FontUnits='normalized',FontSize=0.1,HorizontalAlignment='center');
         end
 
         function [x,y] = calculateWedge(obj,fracStart,fracSwept)
-            nPts = max(round(fracSwept*obj.nPtsCirc),2);
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.SpinnerWheel
+                fracStart
+                fracSwept
+            end
+
+            arguments (Output)
+                x
+                y
+            end
+
+            nPts = max(round(fracSwept*obj.nPointsForCircle),2);
 
             th = -2*pi*linspace(fracStart,fracStart+fracSwept,nPts)+pi/2;
             x = NaN(nPts+2,1);
@@ -244,6 +272,10 @@ classdef spinnerWheel < handle
     %% Methods -- utilities
     methods (Static, Access = private)
         function RGB = makeRGBColors(nColors)
+            arguments (Input)
+                nColors
+            end
+
             R = NaN(nColors,1);
             G = NaN(nColors,1);
             B = NaN(nColors,1);

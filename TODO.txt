@@ -1,3 +1,4 @@
+• Generalize the location where logos are loaded from
 • Save nVotes to getenv('PROGRAMDATA')
 • Add "save" functionality to restaurant selector
     ◘ Save to getenv('PROGRAMDATA')
