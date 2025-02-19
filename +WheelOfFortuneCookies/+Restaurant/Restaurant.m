@@ -70,6 +70,23 @@ classdef Restaurant < handle
 
             obj.logoImage = imread(logoImageFileName);
         end
+
+        function readLogoImageFromClipboard(obj)
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.Restaurant.Restaurant
+            end
+
+            % Try to get the image from the clipboard.
+            imclipboardData = WheelOfFortuneCookies.HelperFunctions.imclipboard("paste");
+            if isempty(imclipboardData)
+                error("WheelOfFortuneCookies:HelperFunctions:readLogoImageFromClipboard:clipboardImageNotRead",...
+                    "The image on the clipboard could not be read." + newline + newline +...
+                    "Make sure your clipboard contents are an image and try again.");
+            end
+
+            obj.logoImage = imclipboardData;
+            % obj.imageData = flip(imclipboardData,1);
+        end
     end
 
     %% Methods -- voting
