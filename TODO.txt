@@ -1,15 +1,13 @@
-• Make a default restaurant list for Me & Mom
-• Make sure restaurant grid generation in generalized
 • Add an option to Main GUI to load a restaurant list.
-• Show icons next to restaurant names in Main GUI.
 
 • When closing, save the number of votes per person and the path of the last-used restaurant list to getenv("PROGRAMDATA").
 • If number of votes per person is available in getenv("PROGRAMDATA") at startup, use it.
 • If last-used restaurant list is available in getenv("PROGRAMDATA"), use it. If it cannot be loaded, show an error message.
-• Add warning if closing restaurant list without saving
+• Add warning if closing restaurant list without saving.
+• Add confirmation before changing restaurant list if there have been any votes cast.
 
 • Add instructions to main GUI
 • Add instructions to restaurant selector GUI
-• Add confirmation when loading a restaurant list if there are resaurants already in the GUI
+• Add confirmation when loading a restaurant list if there are restaurants already in the GUI
 
 • Comment all code.

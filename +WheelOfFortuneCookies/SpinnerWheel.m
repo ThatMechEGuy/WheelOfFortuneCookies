@@ -11,7 +11,7 @@ classdef SpinnerWheel < handle
         startAngles (1,:) double
         endAngles (1,:) double
         names (1,:) string
-        data (1,:)
+        restaurants (1,:) WheelOfFortuneCookies.Restaurant.Restaurant = WheelOfFortuneCookies.Restaurant.Restaurant.empty
         pointerAngle (1,1) double = pi
 
         pointerPolyshape polyshape = polyshape.empty;
@@ -50,13 +50,14 @@ classdef SpinnerWheel < handle
 
     %% Methods -- graphics
     methods
-        function draw(obj,wedgeSizes,wedgeNames,wedgeData)
+        function draw(obj,restaurants)
             arguments (Input)
                 obj (1,1) WheelOfFortuneCookies.SpinnerWheel
-                wedgeSizes (1,:) double {mustBeNonempty,mustBeReal,mustBeNonnegative}
-                wedgeNames (1,:) string {mustBeNonempty}
-                wedgeData (1,:)
+                restaurants (1,:) WheelOfFortuneCookies.Restaurant.Restaurant {mustBeNonempty}
             end
+
+            wedgeSizes = [restaurants.nVotes];
+            wedgeNames = [restaurants.name];
 
             delete(obj.wedgePatch)
             delete(obj.wedgeText)
@@ -78,12 +79,12 @@ classdef SpinnerWheel < handle
             deleteInds = wedgeSizes == 0;
             wedgeSizes(deleteInds) = [];
             wedgeNames(deleteInds) = [];
-            wedgeData(deleteInds) = [];
+            restaurants(deleteInds) = [];
 
             nWedges = numel(wedgeSizes);
             
             obj.names = wedgeNames;
-            obj.data = wedgeData;
+            obj.restaurants = restaurants;
 
 
             fracSpans = wedgeSizes/sum(wedgeSizes);
@@ -154,7 +155,7 @@ classdef SpinnerWheel < handle
             obj.pointerPatch.YData = xy(:,2);
         end
 
-        function [winnerName,winnerData] = spin(obj)
+        function winnerRestaurant = spin(obj)
             arguments (Input)
                 obj (1,1) WheelOfFortuneCookies.SpinnerWheel
             end
@@ -198,11 +199,9 @@ classdef SpinnerWheel < handle
             TF = WheelOfFortuneCookies.HelperFunctions.isInAngularRange(obj.wheelAngle+[obj.startAngles;obj.endAngles].',obj.pointerAngle);
 
             if sum(TF) == 1
-                winnerName = obj.names(TF);
-                winnerData = obj.data(TF);
+                winnerRestaurant = obj.restaurants(TF);
             else
-                winnerName = NaN;
-                winnerData = [];
+                winnerRestaurant = [];
             end
             
 

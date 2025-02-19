@@ -3,10 +3,6 @@ classdef Restaurant < handle
     properties (SetObservable = true, AbortSet = true)
         UserData
     end
-
-    properties (Access = private, Constant)
-        ALLOWED_LOGO_FILE_TYPES (1,:) string = [".png",".bmp",".jpg",".jpeg"]
-    end
     
     %% Properties -- info
     properties (SetAccess = private)
@@ -19,11 +15,11 @@ classdef Restaurant < handle
 
     %% Proeprties -- voting
     properties (Transient, SetObservable = true, AbortSet = true, SetAccess = private)
-        nVotes (1,1) double {mustBeInteger,mustBeNonnegative} = 0
+        nVotes (1,1) double {mustBeInteger,mustBeNonnegative,mustBeFinite} = 0
     end
 
-    properties (Transient, SetObservable = true)
-        nVotesTemp (1,1) double {mustBeInteger,mustBeNonnegative} = 0
+    properties (Transient, SetObservable = true, AbortSet = true)
+        nVotesTemp (1,1) double {mustBeInteger,mustBeFinite} = 0
     end
 
     %% Methods -- constructor/destructor
@@ -116,6 +112,27 @@ classdef Restaurant < handle
             end
 
             obj.nVotesTemp = 0;
+        end
+    end
+
+    %% Methods -- copying
+    methods
+        function duplicateObj = duplicate(obj)
+            arguments (Input)
+                obj (1,1) WheelOfFortuneCookies.Restaurant.Restaurant
+            end
+
+            arguments (Output)
+                duplicateObj (1,1) WheelOfFortuneCookies.Restaurant.Restaurant
+            end
+
+            duplicateObj = WheelOfFortuneCookies.Restaurant.Restaurant;
+
+            duplicateObj.logoImage = obj.logoImage;
+            duplicateObj.name = obj.name;
+            duplicateObj.nVotes = obj.nVotes;
+            duplicateObj.UserData = obj.UserData;
+            duplicateObj.nVotesTemp = obj.nVotesTemp;
         end
     end
 end
